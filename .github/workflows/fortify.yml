@@ -26,8 +26,9 @@ permissions:
 
 jobs:
   fortify:
-    # Same runner as build.yml. On github.com without a self-hosted runner use: ubuntu-latest
-    runs-on: java-gh-runner
+    # GitHub-hosted runner, same as build.yml. A self-hosted label (e.g. java-gh-runner) only works if such
+    # a runner is registered for this repository, otherwise the job waits forever in "Queued".
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
