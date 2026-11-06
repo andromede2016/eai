@@ -1,0 +1,63 @@
+# Fortify SAST (static code security scan) with the official OpenText action.
+# Configure ONE back-end in GitHub: Settings -> Secrets and variables -> Actions.
+#
+# A) Fortify on Demand (SaaS)
+#    secrets: FOD_CLIENT_ID, FOD_CLIENT_SECRET
+#    variables: FOD_URL, FOD_RELEASE (e.g. "eai:main")
+# B) Fortify SSC + ScanCentral SAST (on-premise)
+#    secrets: SSC_TOKEN, SC_SAST_TOKEN
+#    variables: SSC_URL, SSC_APPVERSION (e.g. "eai:main"), SC_SAST_SENSOR_VERSION (e.g. "24.4")
+name: Fortify
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    - cron: '0 3 * * 1'   # every Monday 03:00 UTC, catches newly published rules
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write  # upload results to GitHub Code Scanning
+  pull-requests: write    # PR summary comment
+
+jobs:
+  fortify:
+    # Same runner as build.yml. On github.com without a self-hosted runner use: ubuntu-latest
+    runs-on: java-gh-runner
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ScanCentral packages the sources with Maven to resolve the classpath -> needs JDK + Maven
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Fortify SAST scan
+        uses: fortify/github-action@v2
+        with:
+          sast-scan: true
+        env:
+          # A) Fortify on Demand
+          FOD_URL: ${{ vars.FOD_URL }}
+          FOD_CLIENT_ID: ${{ secrets.FOD_CLIENT_ID }}
+          FOD_CLIENT_SECRET: ${{ secrets.FOD_CLIENT_SECRET }}
+          FOD_RELEASE: ${{ vars.FOD_RELEASE }}
+          # B) SSC + ScanCentral SAST
+          SSC_URL: ${{ vars.SSC_URL }}
+          SSC_TOKEN: ${{ secrets.SSC_TOKEN }}
+          SC_SAST_TOKEN: ${{ secrets.SC_SAST_TOKEN }}
+          SSC_APPVERSION: ${{ vars.SSC_APPVERSION }}
+          SC_SAST_SENSOR_VERSION: ${{ vars.SC_SAST_SENSOR_VERSION }}
+          # common
+          PACKAGE_EXTRA_OPTS: -bt mvn   # package the sources with Maven
+          DO_WAIT: true                 # wait for the scan to finish...
+          DO_EXPORT: true               # ...then export results to GitHub Code Scanning
+          DO_PR_COMMENT: true           # summary comment on pull requests
