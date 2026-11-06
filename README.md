@@ -144,6 +144,11 @@ Run without Docker: embedded Artemis, in-memory H2, `@EmbeddedKafka`.
 `eai/actions-release-sbd/java-build@v1` (company-specific). On a personal GitHub use `ubuntu-latest`,
 `actions/setup-java@v4` (temurin 17, cache maven) and `mvn -B clean verify`.
 
+`.github/workflows/fortify.yml`: Fortify SAST scan (`fortify/github-action@v2`) on push/PR to `main`,
+every Monday and on demand. Needs Fortify on Demand **or** SSC + ScanCentral secrets/variables
+(listed at the top of the file). Results go to the Fortify server and to GitHub Code Scanning.
+The folder must be named `.github` (with the dot), otherwise GitHub ignores it.
+
 ## 10. Known limits / ideas
 
 - JMS and Kafka sends are not part of the DB transaction: put `db` first in a fan-out list. A commit
