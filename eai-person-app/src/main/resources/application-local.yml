@@ -1,0 +1,25 @@
+# Local development: embedded in-VM Artemis broker, no external broker needed.
+# Run with: java -jar target/eai-person-app-*.jar --spring.profiles.active=local
+spring:
+  artemis:
+    mode: embedded
+    embedded:
+      enabled: true
+      persistent: false
+      queues: PERSON.IN,PERSON.DLQ,PERSON.OUT
+  # Embedded H2 file database instead of the PostgreSQL container
+  datasource:
+    url: jdbc:h2:file:./data/persondb;AUTO_SERVER=TRUE
+    username: sa
+    password: ""
+  h2:
+    console:
+      enabled: true   # http://localhost:8080/h2-console
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+# No embedded Kafka at runtime: start it with 'docker compose up -d kafka kafka-init' and set KAFKA_ENABLED=true
+eai:
+  kafka:
+    enabled: ${KAFKA_ENABLED:false}
