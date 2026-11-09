@@ -1,4 +1,4 @@
-# EAI – learning project (framework + Person app)
+# EAI – learning project (framework + Person app Test)
 
 Small Enterprise Application Integration (EAI) example used to learn JMS, Kafka and databases.
 This file is the **hand-over document**: read it first in a new session before changing code.
