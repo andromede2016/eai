@@ -167,6 +167,55 @@ The folder must be named `.github` (with the dot), otherwise GitHub ignores it.
   `argocd/` Applications (dev auto sync, prod manual). All variables come from ConfigMap
   `eai-person-app-config`; credentials from Secret `eai-person-app-secret` (prod Secret not in Git).
 
+## 10c. Roadmap – gaps vs. a company EAI / messaging bus
+
+Not implemented yet. Suggested order at the end.
+
+1. Reliability and delivery
+   - Outbox pattern (OUTBOX table + publisher) for consistent Kafka/JMS sends with the DB transaction.
+   - Idempotent consumer (PROCESSED_MESSAGE table or business key) to skip redeliveries.
+   - Retry with exponential backoff before the DLQ; transient errors retried, permanent errors straight to DLQ.
+   - DLQ reprocessing: inspect, fix and replay `PERSON.DLQ` / `person.dlt` (admin endpoint or tool).
+   - Poison-message protection: Artemis max redelivery, Kafka listener error handler.
+   - Ordering: person id as Kafka key.
+2. Message contract and governance
+   - Canonical internal `Person` model, separate from the XML/JSON wire formats (mappers per source/target).
+   - Schema registry (Avro / JSON Schema) for Kafka, XSD validation for XML.
+   - Message versioning (`schemaVersion` header, support N and N-1).
+   - Standard envelope/headers: messageId, correlationId, causationId, source, timestamp, type.
+3. Observability
+   - Correlation id propagation: inbound message -> MDC logs -> outbound headers.
+   - Distributed tracing (OpenTelemetry / Micrometer Tracing) across JMS, Kafka, DB.
+   - Business metrics (Micrometer/Prometheus): received/processed/failed per route, latency, DLQ size, consumer lag.
+   - Message audit trail (which message went where, with status).
+   - Alerting on DLQ growth, lag, error rate.
+4. Routing / Enterprise Integration Patterns
+   - Content-based router, message filter, splitter/aggregator.
+   - Content enricher with external lookups (REST reference data) + caching.
+   - Claim check for large payloads.
+   - More adapters: file/SFTP, REST in/out, SOAP, email.
+5. Security
+   - TLS on Artemis, Kafka, PostgreSQL.
+   - Broker authn/authz (Kafka SASL/SCRAM or mTLS, Artemis per-queue rights).
+   - Secrets via Vault / Sealed Secrets / External Secrets.
+   - Mask/encrypt personal data in logs and DLQ (GDPR).
+   - Payload signing/encryption if partners require it.
+6. Operations
+   - Flyway/Liquibase instead of `schema.sql` (required with 2 replicas).
+   - Graceful shutdown (finish in-flight messages).
+   - Back-pressure / throttling (consumer concurrency, rate limits).
+   - Circuit breaker (Resilience4j) on targets: pause consumption when a target is down.
+   - Pause/resume routes at runtime (admin endpoint).
+   - HPA / KEDA autoscaling on CPU or Kafka lag.
+   - CI image build + push to registry, automatic tag bump for Argo CD (Argo CD Image Updater).
+7. Testing
+   - Testcontainers integration tests (PostgreSQL, Kafka, Artemis).
+   - Contract tests (Pact or schema compatibility checks).
+   - Load tests (e.g. Gatling).
+
+Suggested order: Flyway -> idempotent consumer + retry/backoff -> outbox -> correlation id, metrics,
+tracing -> canonical model + versioned schemas -> DLQ replay -> Testcontainers -> security hardening.
+
 ## 11. Conventions for future sessions
 
 - Answers in the Eclipse chat: avoid Markdown tables (rendered as raw text), use lists.
