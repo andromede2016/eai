@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: eai-person-app-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/andromede2016/eai.git
+    targetRevision: main
+    path: eai-deploy/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: eai-prod
+  # Manual sync in prod: applied only when someone clicks Sync in Argo CD.
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true

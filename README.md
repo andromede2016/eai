@@ -7,10 +7,12 @@ This file is the **hand-over document**: read it first in a new session before c
 
 ```
 /home/badr/git/eai/
-├── pom.xml                  eai-parent: Spring Boot 3.5.0 parent + module list (Java 17, Lombok 1.18.42)
+├── pom.xml                  eai-parent: Spring Boot 3.5.0 parent + module list (Java 21, Lombok 1.18.42)
 ├── .github/workflows/build.yml   CI (see §9)
 ├── eai-framework/           plain Java kernel, NO Spring code
+├── eai-deploy/              Kubernetes config managed by Argo CD (not a Maven module, see §10b)
 └── eai-person-app/          Spring Boot app using the kernel
+    ├── Dockerfile           container image (temurin 21 JRE)
     ├── docker-compose.yml   Artemis, Kafka, PostgreSQL + web UIs
     └── src/main/resources/  application.yml, application-local.yml, schema.sql
 ```
@@ -157,6 +159,13 @@ The folder must be named `.github` (with the dot), otherwise GitHub ignores it.
 - Kafka delivery is at-least-once: a record can be processed twice after a failure.
 - Ideas: Kafka Connect / Debezium on PostgreSQL, compacted "current person" topic, outbox pattern,
   Testcontainers tests against real PostgreSQL/Kafka.
+
+## 10b. Kubernetes / Argo CD
+
+- `eai-person-app/Dockerfile`: image built from the jar (temurin 21 JRE, non-root uid 1001).
+- Configuration is in the folder `eai-deploy/` of this repo (Kustomize): `base/` + `overlays/dev`, `overlays/prod`,
+  `argocd/` Applications (dev auto sync, prod manual). All variables come from ConfigMap
+  `eai-person-app-config`; credentials from Secret `eai-person-app-secret` (prod Secret not in Git).
 
 ## 11. Conventions for future sessions
 

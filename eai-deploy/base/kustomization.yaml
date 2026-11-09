@@ -1,0 +1,24 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yaml
+  - service.yaml
+
+# Defaults shared by all environments. Overlays override keys with behavior: merge.
+# Each key is an env variable read by application.yml or by Spring relaxed binding
+# (e.g. EAI_INBOUND_QUEUE -> eai.inbound.queue).
+configMapGenerator:
+  - name: eai-person-app-config
+    literals:
+      - SERVER_PORT=8080
+      - EAI_TRACE_LEVEL=INFO
+      - KAFKA_ENABLED=true
+      - DB_POOL_SIZE=10
+      - EAI_INBOUND_QUEUE=PERSON.IN
+      - EAI_DEAD_LETTER_QUEUE=PERSON.DLQ
+      - EAI_JMS_OUTPUT_QUEUE=PERSON.OUT
+      - EAI_OUTPUT_CHANNEL=db
+      - EAI_KAFKA_INPUT_TOPIC=person.in
+      - EAI_KAFKA_OUTPUT_TOPIC=person.out
+      - EAI_KAFKA_DEAD_LETTER_TOPIC=person.dlt
+      - EAI_KAFKA_GROUP_ID=eai-person-app

@@ -1,0 +1,15 @@
+# Maven build output
+target/
+
+# Local H2 database files (local profile)
+data/
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# IntelliJ / OS
+.idea/
+*.iml
+.DS_Store

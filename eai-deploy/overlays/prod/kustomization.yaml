@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: eai-prod
+resources:
+  - ../../base
+
+images:
+  - name: eai-person-app
+    newName: registry.example.com/eai/eai-person-app   # TODO: your registry
+    newTag: 1.0.0                                       # released, immutable tag only
+
+replicas:
+  - name: eai-person-app
+    count: 2
+
+configMapGenerator:
+  - name: eai-person-app-config
+    behavior: merge
+    literals:
+      - EAI_TRACE_LEVEL=INFO
+      - DB_POOL_SIZE=20
+      - DB_URL=jdbc:postgresql://postgres.prod.example.com:5432/persondb   # TODO
+      - ARTEMIS_URL=tcp://artemis.prod.example.com:61616                   # TODO
+      - KAFKA_BOOTSTRAP_SERVERS=kafka.prod.example.com:9092                # TODO
+
+# Secret 'eai-person-app-secret' (DB_USER, DB_PASSWORD, ARTEMIS_USER, ARTEMIS_PASSWORD)
+# is NOT in Git for prod: create it in the cluster or via Sealed Secrets / External Secrets.

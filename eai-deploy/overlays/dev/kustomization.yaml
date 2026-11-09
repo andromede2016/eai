@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: eai-dev
+resources:
+  - ../../base
+
+images:
+  - name: eai-person-app
+    newName: registry.example.com/eai/eai-person-app   # TODO: your registry
+    newTag: 1.0.0-SNAPSHOT
+
+configMapGenerator:
+  - name: eai-person-app-config
+    behavior: merge
+    literals:
+      - EAI_TRACE_LEVEL=DEBUG
+      - DB_URL=jdbc:postgresql://postgres.eai-dev.svc:5432/persondb   # TODO
+      - ARTEMIS_URL=tcp://artemis.eai-dev.svc:61616                   # TODO
+      - KAFKA_BOOTSTRAP_SERVERS=kafka.eai-dev.svc:9092                # TODO
+
+# Dev only: plain credentials in Git. Never do this for prod.
+secretGenerator:
+  - name: eai-person-app-secret
+    literals:
+      - DB_USER=eai
+      - DB_PASSWORD=eai
+      - ARTEMIS_USER=artemis
+      - ARTEMIS_PASSWORD=artemis
